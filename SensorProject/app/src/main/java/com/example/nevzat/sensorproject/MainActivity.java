@@ -9,7 +9,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Timer;
+import java.util.concurrent.TimeUnit;
 
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
@@ -27,7 +31,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener
+                (this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), 100);
+
         if (savedInstanceState!=null){
             activeTime= savedInstanceState.getLong(ACTIVE_TIME);
             passiveTime = savedInstanceState.getLong(PASSIVE_TIME);
@@ -38,6 +44,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         textz = (TextView)findViewById(R.id.TextZ);
         textActive = (TextView) findViewById(R.id.textActive);
         textPassive = (TextView) findViewById(R.id.textPassive);
+        textActive.setText("Active Time:  00:00:00");
+        textPassive.setText("Passive Time:  00:00:00");
     }
 
     @Override
@@ -65,39 +73,60 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     protected void onResume() {
         super.onResume();
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), 100);
     }
     @Override
     public void onSensorChanged(SensorEvent event) {
 
-        Date date =new Date();
+
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             float [] values = event.values;
             x = values[0];
             y = values[1];
             z = values[2];
-            int hour,minute,second,temp;
-            textx.setText(Float.toString(event.values[0]));
-            texty.setText(Float.toString(event.values[1]));
-            textz.setText(Float.toString(event.values[2]));
+            //int hour,minute,second,temp;
+            textx.setText("X: "+x);
+            texty.setText("Y: "+y);
+            textz.setText("Z: "+z);
+            //sensorValue=Math.sqrt(Math.pow(x,2)+ Math.pow(y,2)+ Math.pow(z,2))-Math.sqrt(Math.pow(beforeX,2)+ Math.pow(beforeY,2)+ Math.pow(beforeZ,2));
+
             sensorValue=Math.sqrt(Math.pow(x-beforeX,2)+ Math.pow(y-beforeY,2)+ Math.pow(z-beforeZ,2));
-            if(sensorValue>6){
-                activeTime+=0.23;
-                date.setTime(activeTime);
-                /*
+            if(sensorValue>0.2){
+                activeTime+=10;
+                //date.setTime(activeTime);
+                Date date = new Date(activeTime);
+                DateFormat formatter = new SimpleDateFormat("HH:mm:ss:SSS");
+                String dateFormatted = formatter.format(date);
+
+                long hour = TimeUnit.MILLISECONDS.toHours(activeTime);
+                activeTime -= TimeUnit.HOURS.toMillis(hour);
+                long minute = TimeUnit.MILLISECONDS.toMinutes(activeTime);
+                activeTime -= TimeUnit.MINUTES.toMillis(minute);
+                long second = TimeUnit.MILLISECONDS.toSeconds(activeTime);
+/*
                 temp = (int)activeTime;
                 hour = temp/3600;
                 temp%=3600;
                 minute=temp/60;
                 temp%=60;
                 second = temp;
-                textActive.setText("Active Time:  "+hour+":"+minute+":"+second);
                 */
-                textActive.setText("Active Time:  "+ date.getHours()+":"+ date.getMinutes()+":"+ date.getSeconds());
+//                textActive.setText("Active Time:  "+ hour+":"+minute+":"+second);
+                textActive.setText("Active Time:  "+ dateFormatted);
+
+                //textActive.setText("Active Time:  "+ date.getHours()+":"+ date.getMinutes()+":"+ date.getSeconds());
             }
             else{
-                passiveTime+=0.23;
-                date.setTime(passiveTime);
+                passiveTime+=10;
+                Date date = new Date(passiveTime);
+                DateFormat formatter = new SimpleDateFormat("HH:mm:ss:SSS");
+                String dateFormatted = formatter.format(date);
+                //date.setTime(passiveTime);
+                long hour = TimeUnit.MILLISECONDS.toHours(passiveTime);
+                passiveTime -= TimeUnit.HOURS.toMillis(hour);
+                long minute = TimeUnit.MILLISECONDS.toMinutes(passiveTime);
+                passiveTime -= TimeUnit.MINUTES.toMillis(minute);
+                long second = TimeUnit.MILLISECONDS.toSeconds(passiveTime);
                 /*
                 temp = (int)passiveTime;
                 hour = temp/3600;
@@ -105,9 +134,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 minute=temp/60;
                 temp%=60;
                 second = temp;
-
-                textPassive.setText("Passive Time:  "+hour+":"+minute+":"+second);*/
-                textPassive.setText("Passive Time:  "+ date.getHours()+":"+ date.getMinutes()+":"+ date.getSeconds());
+                */
+                //textPassive.setText("Passive Time:  "+ hour + ":" + minute + ":" + second);
+                textPassive.setText("Passive Time:  "+ dateFormatted);
             }
             beforeX=x;beforeY=y;beforeZ=z;
             Log.d("MainActivity", String.format("x : %f y : %f z : %f", x, y, z));
